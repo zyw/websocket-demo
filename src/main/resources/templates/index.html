@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Title</title>
+    <script th:src="@{/sockjs.min.js}"></script>
+    <script th:src="@{/stomp.min.js}"></script>
+    <script th:src="@{/jquery-1.8.3.min.js}"></script>
+</head>
+<body>
+
+    <input id="userId" type="text"/>
+    <br/>
+    <br/>
+    <textarea id="message" rows="5" cols="15"></textarea>
+    <br/>
+    <br/>
+    <button id="sendBtn" type="button">发送</button>
+    <br/>
+    <br/>
+    <button id="sendBtn2" type="button">发送2</button>
+
+    <script th:inline="javascript">
+        var userId = /*[[${userId}]]*/ '';
+        var url = 'http://localhost:8080/stompwebsocket';
+        var socket = new SockJS(url, undefined, {protocols_whitelist: ['websocket']});
+        var stompClient = Stomp.over(socket);
+        stompClient.connect({}, function(frame) {
+            stompClient.subscribe('/topic/hello', function(message){
+                //var json = JSON.parse(message.body);
+                console.log(message.body);
+            });
+
+            stompClient.subscribe('/user/' + userId + '/message', function(message){
+                //var messageEntity = JSON.parse(message.body);
+                console.log("user: " + message.body);
+            });
+        });
+        $("#sendBtn").click(function() {
+            var userId = $("#userId").val();
+            var message = $("#message").val();
+            $.get("/send.message",{user:userId,msg:message},function(data) {
+
+            })
+        });
+        $("#sendBtn2").click(function() {
+            var userId = $("#userId").val();
+            var message = $("#message").val();
+            stompClient.send("/app/send.message",{},{userId:userId,msg:message});
+        })
+    </script>
+</body>
+</html>
